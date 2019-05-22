@@ -19,13 +19,16 @@ To practice PCA, you'll take a look at the iris dataset. Run the cell below to l
 
 
 ```python
-from sklearn import datasets
-import pandas as pd
- 
-iris = datasets.load_iris()
-df = pd.DataFrame(iris.data, columns=iris.feature_names)
-df['Target'] = iris.get('target')
-df.head()
+# Load necessary libraries
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+
+# loading dataset into Pandas DataFrame
+iris = pd.read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+                 , names=['sepal length','sepal width','petal length','petal width','target'])
+iris.head()
+
 ```
 
 
@@ -49,11 +52,11 @@ df.head()
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>sepal length (cm)</th>
-      <th>sepal width (cm)</th>
-      <th>petal length (cm)</th>
-      <th>petal width (cm)</th>
-      <th>Target</th>
+      <th>sepal length</th>
+      <th>sepal width</th>
+      <th>petal length</th>
+      <th>petal width</th>
+      <th>target</th>
     </tr>
   </thead>
   <tbody>
@@ -63,7 +66,7 @@ df.head()
       <td>3.5</td>
       <td>1.4</td>
       <td>0.2</td>
-      <td>0</td>
+      <td>Iris-setosa</td>
     </tr>
     <tr>
       <th>1</th>
@@ -71,7 +74,7 @@ df.head()
       <td>3.0</td>
       <td>1.4</td>
       <td>0.2</td>
-      <td>0</td>
+      <td>Iris-setosa</td>
     </tr>
     <tr>
       <th>2</th>
@@ -79,7 +82,7 @@ df.head()
       <td>3.2</td>
       <td>1.3</td>
       <td>0.2</td>
-      <td>0</td>
+      <td>Iris-setosa</td>
     </tr>
     <tr>
       <th>3</th>
@@ -87,7 +90,7 @@ df.head()
       <td>3.1</td>
       <td>1.5</td>
       <td>0.2</td>
-      <td>0</td>
+      <td>Iris-setosa</td>
     </tr>
     <tr>
       <th>4</th>
@@ -95,7 +98,7 @@ df.head()
       <td>3.6</td>
       <td>1.4</td>
       <td>0.2</td>
-      <td>0</td>
+      <td>Iris-setosa</td>
     </tr>
   </tbody>
 </table>
@@ -105,18 +108,6 @@ df.head()
 
 In a minute, you'll perform PCA and visualize the datasets principle components. Before, its helpful to get a little more context regarding the data that you'll be working with. Run the cell below in order to visualize the pairwise feature plots. With this, notice how the target labels are easily separable by any one of the given features.
 
-
-```python
-import matplotlib.pyplot as plt
-%matplotlib inline
-
-pd.plotting.scatter_matrix(df, figsize=(10,10));
-```
-
-
-![png](index_files/index_4_0.png)
-
-
   
 
  
@@ -124,11 +115,10 @@ pd.plotting.scatter_matrix(df, figsize=(10,10));
 
 ```python
 # Create features and Target dataset
-
-
-# Your code here 
-
-
+from sklearn.preprocessing import StandardScaler
+features = ['sepal length', 'sepal width', 'petal length', 'petal width']
+X = iris.loc[:, features].values
+y = iris.loc[:,['target']].values
 ```
 
   
@@ -136,11 +126,9 @@ pd.plotting.scatter_matrix(df, figsize=(10,10));
 
 ```python
 # Standardize the features
-
-
-# Your code here 
-
-
+from sklearn.preprocessing import StandardScaler
+X = StandardScaler().fit_transform(X)
+pd.DataFrame(data = X, columns = features).head()
 ```
 
 
@@ -223,11 +211,9 @@ Now its time to perform PCA! Project the original data which is 4 dimensional in
 
 ```python
 # Run the PCA algorithm
-
-
-# Your code here 
-
-
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(X)
 ```
 
 To visualize the components, it will be useful to also look at the target associated with the particular observation. 
@@ -236,11 +222,10 @@ As such, append the target (flower name) to the principal components in a pandas
 
 ```python
 # Create a new dataset fro principal components 
-
-
-# Your code here 
-
-
+df = pd.DataFrame(data = principalComponents
+             , columns = ['PC1', 'PC2'])
+result_df = pd.concat([df, iris[['target']]], axis = 1)
+result_df.head(5)
 ```
 
 
@@ -316,12 +301,29 @@ Using the target data, we can visualize the principal components according to th
 
 ```python
 # Principal Componets scatter plot
+plt.style.use('seaborn-dark')
+fig = plt.figure(figsize = (10,8))
+ax = fig.add_subplot(1,1,1) 
+ax.set_xlabel('First Principal Component ', fontsize = 15)
+ax.set_ylabel('Second Principal Component ', fontsize = 15)
+ax.set_title('Principal Component Analysis (2PCs) for Iris Dataset', fontsize = 20)
 
 
-# Your code here 
-
-
+targets = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+colors = ['r', 'g', 'b']
+for target, color in zip(targets,colors):
+    indicesToKeep = iris['target'] == target
+    ax.scatter(result_df.loc[indicesToKeep, 'PC1']
+               , result_df.loc[indicesToKeep, 'PC2']
+               , c = color
+               , s = 50)
+ax.legend(targets)
+ax.grid()
 ```
+
+
+![png](index_files/index_16_0.png)
+
 
 ## Explained Variance
 
@@ -330,12 +332,9 @@ You can see above that the three classes in the dataset are fairly well separabl
 
 
 ```python
-# Calculate the variance explained by pricipal components
-
-
-# Your code here 
-
-
+# Calculate the variance explained by priciple components
+print('Variance of each component:', pca.explained_variance_ratio_)
+print('\n Total Variance Explained:', round(sum(list(pca.explained_variance_ratio_))*100, 2))
 ```
 
     Variance of each component: [0.72770452 0.23030523]
@@ -356,15 +355,29 @@ Since the principal components explain 95% of the variance in the data, it is in
 
 
 ```python
-# classification complete Iris dataset
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import metrics
+import timeit
 
-# Your code here 
 
-
+X = iris[['sepal length','sepal width','petal length','petal width']]
+y = iris.target
+y = preprocessing.LabelEncoder().fit_transform(y)
+start = timeit.timeit()
+X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=9)
+model = KNeighborsClassifier()
+model.fit(X_train, Y_train)
+Yhat = model.predict(X_test)
+acc = metrics.accuracy_score(Yhat, Y_test)
+end = timeit.timeit()
+print("Accuracy:",acc)
+print ("Time Taken:", end - start)
 ```
 
     Accuracy: 1.0
-    Time Taken: 0.0017656260024523363
+    Time Taken: -7.582898251712322e-05
 
 
 Great , so you can see that we are able to classify the data with 100% accuracy in the given time. Remember the time taken may different randomly based on the load on your cpu and number of processes running on your PC. 
@@ -378,15 +391,23 @@ Now repeat the above process for dataset made from principal components
 
 ```python
 # Run the classifer on PCA'd data
+X = result_df[['PC1', 'PC2']]
+y = iris.target
+y = preprocessing.LabelEncoder().fit_transform(y)
 
-
-# Your code here 
-
-
+start = timeit.timeit()
+X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, random_state=9)
+model = KNeighborsClassifier()
+model.fit(X_train, Y_train)
+Yhat = model.predict(X_test)
+acc = metrics.accuracy_score(Yhat, Y_test)
+end = timeit.timeit()
+print("Accuracy:",acc)
+print ("Time Taken:", end - start)
 ```
 
     Accuracy: 0.9666666666666667
-    Time Taken: 0.00035927799763157964
+    Time Taken: -0.0027275790052954108
 
 
 While some accuracy is loss in this representation, the training time has vastly improved. In more complex cases, PCA can even improve the accuracy of some machine learning tasks. In particular, PCA can be useful to reduce overfitting.
@@ -395,8 +416,39 @@ While some accuracy is loss in this representation, the training time has vastly
 
 
 ```python
-  
+# Plot decision boundary using principal components 
+def decision_boundary(pred_func):
+    
+    #Set the boundary
+    x_min, x_max = X.iloc[:, 0].min() - 0.5, X.iloc[:, 0].max() + 0.5
+    y_min, y_max = X.iloc[:, 1].min() - 0.5, X.iloc[:, 1].max() + 0.5
+    h = 0.01
+    
+    # build meshgrid
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = pred_func(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # plot the contour
+    plt.figure(figsize=(15,10))
+    plt.contourf(xx, yy, Z, cmap=plt.cm.afmhot)
+    plt.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, cmap=plt.cm.Spectral, marker='x')
+
+decision_boundary(lambda x: model.predict(x))
+
+plt.title("decision boundary")
 ```
+
+
+
+
+    Text(0.5,1,'decision boundary')
+
+
+
+
+![png](index_files/index_26_1.png)
+
 
   
 
